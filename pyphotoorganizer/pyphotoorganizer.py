@@ -63,7 +63,6 @@ def do(folder, recursive=False, test_mode=False):
                     for k, v in im.getexif().items()
                     if k in TAGS
                 }
-                print(exif)
 
                 date_exif = datetime.datetime.strptime(exif['DateTime'],
                                                        '%Y:%m:%d %H:%M:%S')
