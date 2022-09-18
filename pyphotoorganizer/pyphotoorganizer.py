@@ -23,7 +23,7 @@ extensions_vid = [
 ]
 
 
-def do(folder, recursive=False, test_mode=False):
+def do(folder, output_folder=None, recursive=False, test_mode=False):
     print('using folder: %s' % folder)
     print('recursive: %s' % recursive)
     print('test_mode: %s' % test_mode)
@@ -108,7 +108,11 @@ def do(folder, recursive=False, test_mode=False):
                 date_media = date_exif
 
             date_media = date_media.strftime('%Y/%m/%d')
-            target_folder = os.path.join(file_folder, date_media)
+
+            if output_folder is None:
+                target_folder = os.path.join(file_folder, date_media)
+            else:
+                target_folder = os.path.join(output_folder, date_media)
             target_file = os.path.join(target_folder, file_name_only)
             print('file will move to %s' % target_file)
 
@@ -140,13 +144,10 @@ def ls(path, recursive=False):
 if __name__ == '__main__':
     # Set command line arguments
     parser = argparse.ArgumentParser()
-    parser.add_argument('folder', help='full path of the folder containing '
-                                       'photos')
-    parser.add_argument('--recursive', action='store_true',help='scan folder '
-                                                                'recursively')
-
-    parser.add_argument('--test_mode', action='store_true', help='no changes '
-                                                                 'to be made')
+    parser.add_argument('folder', help='full path of the folder containing photos')
+    parser.add_argument('--output_folder', help='full path of the output folder')
+    parser.add_argument('--recursive', action='store_true',help='scan folder recursively')
+    parser.add_argument('--test_mode', action='store_true', help='no changes to be made')
     args = parser.parse_args()
 
-    do(folder=args.folder, recursive=args.recursive, test_mode=args.test_mode)
+    do(folder=args.folder, output_folder=args.output_folder, recursive=args.recursive, test_mode=args.test_mode)
