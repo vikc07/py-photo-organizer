@@ -13,7 +13,9 @@ register_heif_opener()
 extensions_img = [
     '.jpg',
     '.jpeg',
-    '.heic'
+    '.heic',
+    '.dng',
+    '.cr2'
 ]
 
 extensions_vid = [
@@ -60,12 +62,19 @@ def do(folder, output_folder=None, recursive=False, test_mode=False):
 
                 exif = {
                     TAGS[k]: v
-                    for k, v in im.getexif().items()
+                    for k, v in im._getexif().items()
                     if k in TAGS
                 }
 
-                date_exif = datetime.datetime.strptime(exif['DateTime'],
-                                                       '%Y:%m:%d %H:%M:%S')
+                # choose the date/time in the order of preference
+                if exif.get('DateTimeOriginal'):
+                    date_to_use = exif.get('DateTimeOriginal')
+                elif exif.get('DateTimeDigitized'):
+                    date_to_use = exif.get('DateTimeDigitized')
+                else:
+                    date_to_use = exif.get('DateTime')
+
+                date_exif = datetime.datetime.strptime(date_to_use, '%Y:%m:%d %H:%M:%S')
                 im.close()
             except Exception as e:
                 if im:
