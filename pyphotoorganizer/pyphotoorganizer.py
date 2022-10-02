@@ -21,7 +21,10 @@ extensions_img = [
 extensions_vid = [
     '.mov',
     '.avi',
-    '.mp4'
+    '.mp4',
+    '.3gp',
+    '.3gpp',
+    '.mpg'
 ]
 
 
@@ -77,9 +80,6 @@ def do(folder, output_folder=None, recursive=False, test_mode=False):
                 date_exif = datetime.datetime.strptime(date_to_use, '%Y:%m:%d %H:%M:%S')
                 im.close()
             except Exception as e:
-                if im:
-                    im.close()
-
                 # Try to extract date from the file name
                 # iPhone usually YYYY-MM-DD_HH-MI-SS_SSS
                 # Android ZTE usually IMG_YYYYMMDD_HHMISS
@@ -106,8 +106,7 @@ def do(folder, output_folder=None, recursive=False, test_mode=False):
                 # Get file creation time if no success
                 if not date_filename:
                     print('date found from ctime')
-                    date_media = datetime.datetime.fromtimestamp(os.path.getctime(
-                    file))
+                    date_media = datetime.datetime.fromtimestamp(os.path.getctime(file))
                 else:
                     print('date found from file name')
                     date_media = date_filename
