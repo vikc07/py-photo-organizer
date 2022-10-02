@@ -8,6 +8,9 @@ import datetime
 from PIL import Image
 from PIL.ExifTags import TAGS
 from pillow_heif import register_heif_opener
+from hachoir.parser import createParser
+from hachoir.metadata import extractMetadata
+
 register_heif_opener()
 
 extensions_img = [
@@ -28,10 +31,16 @@ extensions_vid = [
 ]
 
 
-def do(folder, output_folder=None, recursive=False, test_mode=False):
-    print('using folder: %s' % folder)
-    print('recursive: %s' % recursive)
-    print('test_mode: %s' % test_mode)
+def do(folder, output_folder=None, recursive=False, test_mode=False, debug=False):
+    print('source_folder: {}'.format(folder))
+    print('output_folder: {}'.format(output_folder))
+    print('recursive: {}'.format(recursive))
+    print('test_mode: {}'.format(test_mode))
+    print('debug_mode: {}'.format(debug))
+
+    if debug:
+        print('img extensions: {}'.format(extensions_img))
+        print('vid extensions: {}'.format(extensions_vid))
 
     if os.path.isdir(folder):
         print('looking for files')
@@ -50,35 +59,52 @@ def do(folder, output_folder=None, recursive=False, test_mode=False):
                 else:
                     others.append(file)
 
-        print('found %s image(s)' % len(images))
-        print('found %s movie(s)' % len(movies))
-        print('found %s other(s)' % len(others))
+        print('found {} image(s)'.format(len(images)))
+        print('found {} movie(s)'.format(len(movies)))
+        print('found {} other(s)'.format(len(others)))
 
         for file in images + movies:
-            print('file %s' % file)
+            print('file {}'.format(file))
             file_name_only = os.path.basename(file)
             file_folder = os.path.dirname(os.path.abspath(file))
 
             # Try Exif data
             try:
-                im = Image.open(file)
+                if file in images:
+                    im = Image.open(file)
 
-                exif = {
-                    TAGS[k]: v
-                    for k, v in im._getexif().items()
-                    if k in TAGS
-                }
+                    exif = {
+                        TAGS[k]: v
+                        for k, v in im._getexif().items()
+                        if k in TAGS
+                    }
 
-                # choose the date/time in the order of preference
-                if exif.get('DateTimeOriginal'):
-                    date_to_use = exif.get('DateTimeOriginal')
-                elif exif.get('DateTimeDigitized'):
-                    date_to_use = exif.get('DateTimeDigitized')
+                    # choose the date/time in the order of preference
+                    if exif.get('DateTimeOriginal'):
+                        date_to_use = exif.get('DateTimeOriginal')
+                    elif exif.get('DateTimeDigitized'):
+                        date_to_use = exif.get('DateTimeDigitized')
+                    else:
+                        date_to_use = exif.get('DateTime')
+
+                    date_exif = datetime.datetime.strptime(date_to_use, '%Y:%m:%d %H:%M:%S')
+
+                    if debug:
+                        print('file is a video')
+                        print('datetime: {}'.format(date_exif))
+
+                    im.close()
                 else:
-                    date_to_use = exif.get('DateTime')
+                    parser = createParser(file)
+                    metadata = extractMetadata(parser).exportDictionary()['Metadata']
 
-                date_exif = datetime.datetime.strptime(date_to_use, '%Y:%m:%d %H:%M:%S')
-                im.close()
+                    date_to_use = metadata['Creation date']
+                    date_exif = datetime.datetime.strptime(date_to_use, '%Y-%m-%d %H:%M:%S')
+
+                    if debug:
+                        print('file is a video')
+                        print('datetime: {}'.format(date_exif))
+
             except Exception as e:
                 # Try to extract date from the file name
                 # iPhone usually YYYY-MM-DD_HH-MI-SS_SSS
@@ -156,6 +182,8 @@ if __name__ == '__main__':
     parser.add_argument('--output_folder', help='full path of the output folder')
     parser.add_argument('--recursive', action='store_true',help='scan folder recursively')
     parser.add_argument('--test_mode', action='store_true', help='no changes to be made')
+    parser.add_argument('--debug', action='store_true', help='debug mode')
     args = parser.parse_args()
 
-    do(folder=args.folder, output_folder=args.output_folder, recursive=args.recursive, test_mode=args.test_mode)
+    do(folder=args.folder, output_folder=args.output_folder, recursive=args.recursive, test_mode=args.test_mode,
+       debug=args.debug)
