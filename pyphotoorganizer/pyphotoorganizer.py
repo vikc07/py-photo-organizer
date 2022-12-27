@@ -18,7 +18,8 @@ extensions_img = [
     '.jpeg',
     '.heic',
     '.dng',
-    '.cr2'
+    '.cr2',
+    '.png'
 ]
 
 extensions_vid = [
